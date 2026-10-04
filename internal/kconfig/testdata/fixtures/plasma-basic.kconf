@@ -1,0 +1,31 @@
+# Sanitized Plasma-style KConfig fixture
+
+[General]
+ColorScheme=BreezeDark
+Name[en_US]=Example Desktop
+
+[Containments][1]
+activityId=00000000-0000-0000-0000-000000000000
+formfactor=0
+immutability=1
+lastScreen=0
+plugin=org.kde.plasma.folder
+wallpaperplugin=org.kde.image
+
+[Containments][1][Applets][2]
+immutability=1
+plugin=org.kde.plasma.kickoff
+
+[Containments][1][Applets][2][Configuration][General]
+favorites=preferred://browser,preferred://filemanager
+icon=launch
+
+[Containments][1][Wallpaper][org.kde.image][General]
+Image=file:///usr/share/wallpapers/example/contents/images/1920x1080.png
+FillMode=2
+
+[KDE]
+SingleClick=false
+
+[Updates][$i]
+performed=/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/example.js
