@@ -41,3 +41,4 @@ make the suite faster.
 
 ## Project
 - Ensure the CONTRIBUTING.md is up-to-date.
+- Use conventional commits for commit messages.
