@@ -38,6 +38,7 @@ func NewRootCommand(stdout, stderr io.Writer) *cobra.Command {
 	cmd.AddCommand(newDoctorCommand(stdout))
 	cmd.AddCommand(newInspectLiveCommand(stdout))
 	cmd.AddCommand(newApplyCommand(stdout))
+	cmd.AddCommand(newImportCommand(stdout))
 	cmd.AddCommand(newVersionCommand(stdout))
 
 	return cmd
@@ -121,6 +122,23 @@ func newInspectLiveCommand(stdout io.Writer) *cobra.Command {
 			return runInspectLive(stdout)
 		},
 	}
+}
+
+func newImportCommand(stdout io.Writer) *cobra.Command {
+	var out string
+	var dryRun bool
+
+	cmd := &cobra.Command{
+		Use:   "import <source-dir> <profile>",
+		Short: "Import a received profile without applying it",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runImport(cmd.Context(), stdout, profile.ImportOptions{SourceDir: args[0], Profile: args[1], Out: out, DryRun: dryRun})
+		},
+	}
+	cmd.Flags().StringVar(&out, "out", ".", "output directory")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "show what would be written without writing")
+	return cmd
 }
 
 func newApplyCommand(stdout io.Writer) *cobra.Command {

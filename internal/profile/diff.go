@@ -42,7 +42,9 @@ type Diff struct {
 }
 
 func DiffLive(ctx context.Context, opts DiffOptions) (DiffResult, error) {
-	_ = ctx
+	if err := ctx.Err(); err != nil {
+		return DiffResult{}, fmt.Errorf("diff profile: %w", err)
+	}
 	if opts.Out == "" {
 		opts.Out = "."
 	}
@@ -81,6 +83,9 @@ func DiffLive(ctx context.Context, opts DiffOptions) (DiffResult, error) {
 
 	result := DiffResult{Profile: profileName, ProfileDir: profileDir}
 	for _, file := range allowlist.SortedFiles(list.Files) {
+		if err := ctx.Err(); err != nil {
+			return DiffResult{}, fmt.Errorf("diff profile: %w", err)
+		}
 		diffs, err := diffFile(opts.Roots, profileDir, file)
 		if err != nil {
 			return DiffResult{}, err

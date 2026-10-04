@@ -198,6 +198,33 @@ func TestRunDiffReportsDifferences(t *testing.T) {
 	}
 }
 
+func TestRunImportDryRun(t *testing.T) {
+	t.Parallel()
+
+	configRoot := t.TempDir()
+	sourceOut := t.TempDir()
+	targetOut := t.TempDir()
+	roots := paths.LiveRoots{Config: configRoot, LocalShare: t.TempDir()}
+	writeCLITestFile(t, filepath.Join(configRoot, "kdeglobals"), "[General]\nColorScheme=BreezeDark\n")
+	_, err := profile.Save(context.Background(), profile.SaveOptions{Profile: "shared", Out: sourceOut, Roots: roots})
+	if err != nil {
+		t.Fatalf("Save returned error: %s", err.Error())
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	err = Run(context.Background(), []string{"import", filepath.Join(sourceOut, "profiles", "shared"), "friend", "--out", targetOut, "--dry-run"}, &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("Run returned error: %s", err.Error())
+	}
+	got := stdout.String()
+	for _, want := range []string{"privacy: imported profiles may contain personal data", "security: imported profiles are treated as untrusted input", "dry run: no files written", "profile: friend", "would-create"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("Run output = %q, want containing %q", got, want)
+		}
+	}
+}
+
 func TestRunDiffRejectsUnsupportedFormat(t *testing.T) {
 	t.Parallel()
 
