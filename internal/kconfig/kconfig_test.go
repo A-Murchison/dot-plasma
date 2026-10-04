@@ -3,6 +3,7 @@ package kconfig
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -88,26 +89,34 @@ func TestDiff(t *testing.T) {
 	oldDoc := mustParse(t, strings.Join([]string{
 		"[General]",
 		"Theme=one",
+		"Name[en_US]=Old",
 		"Removed=yes",
 		"Same=value",
+		"[Containments][1]",
+		"plugin=org.kde.old",
 		"",
 	}, "\n"))
 	newDoc := mustParse(t, strings.Join([]string{
 		"[General]",
 		"Theme=two",
+		"Name[en_US]=New",
 		"Added=yes",
 		"Same=value",
+		"[Containments][1]",
+		"plugin=org.kde.new",
 		"",
 	}, "\n"))
 
 	diffs := Diff(oldDoc, newDoc)
-	if len(diffs) != 3 {
-		t.Fatalf("len(diffs) = %d, want 3: %#v", len(diffs), diffs)
+	if len(diffs) != 5 {
+		t.Fatalf("len(diffs) = %d, want 5: %#v", len(diffs), diffs)
 	}
 
-	assertDiff(t, diffs[0], DiffAdded, "Added", "", "yes")
-	assertDiff(t, diffs[1], DiffRemoved, "Removed", "yes", "")
-	assertDiff(t, diffs[2], DiffChanged, "Theme", "one", "two")
+	assertDiff(t, diffs[0], []string{"Containments", "1"}, "", DiffChanged, "plugin", "org.kde.old", "org.kde.new")
+	assertDiff(t, diffs[1], []string{"General"}, "", DiffAdded, "Added", "", "yes")
+	assertDiff(t, diffs[2], []string{"General"}, "en_US", DiffChanged, "Name", "Old", "New")
+	assertDiff(t, diffs[3], []string{"General"}, "", DiffRemoved, "Removed", "yes", "")
+	assertDiff(t, diffs[4], []string{"General"}, "", DiffChanged, "Theme", "one", "two")
 }
 
 func TestParseMalformedGroupReportsLine(t *testing.T) {
@@ -143,9 +152,9 @@ func mustParse(t *testing.T, input string) *Document {
 	return doc
 }
 
-func assertDiff(t *testing.T, diff Difference, status DiffStatus, name, oldValue, newValue string) {
+func assertDiff(t *testing.T, diff Difference, group []string, locale string, status DiffStatus, name, oldValue, newValue string) {
 	t.Helper()
-	if diff.Status != status || diff.Name != name || diff.OldValue != oldValue || diff.NewValue != newValue {
-		t.Fatalf("diff = %#v, want status=%s name=%s old=%q new=%q", diff, status, name, oldValue, newValue)
+	if !slices.Equal(diff.Group, group) || diff.Locale != locale || diff.Status != status || diff.Name != name || diff.OldValue != oldValue || diff.NewValue != newValue {
+		t.Fatalf("diff = %#v, want group=%v locale=%q status=%s name=%s old=%q new=%q", diff, group, locale, status, name, oldValue, newValue)
 	}
 }

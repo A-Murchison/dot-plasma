@@ -98,15 +98,18 @@ func newListCommand(stdout io.Writer) *cobra.Command {
 }
 
 func newDoctorCommand(stdout io.Writer) *cobra.Command {
-	return &cobra.Command{
+	var out string
+
+	cmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Check local environment and project assumptions",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintln(stdout, "doctor is not implemented yet")
-			return nil
+			return runDoctor(stdout, out)
 		},
 	}
+	cmd.Flags().StringVar(&out, "out", ".", "output directory")
+	return cmd
 }
 
 func newInspectLiveCommand(stdout io.Writer) *cobra.Command {
@@ -115,8 +118,7 @@ func newInspectLiveCommand(stdout io.Writer) *cobra.Command {
 		Short: "Show known live config files and whether they exist",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintln(stdout, "inspect-live is not implemented yet")
-			return nil
+			return runInspectLive(stdout)
 		},
 	}
 }

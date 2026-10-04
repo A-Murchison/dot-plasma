@@ -14,12 +14,19 @@ Milestone 0 is complete:
 - Initial allowlist data file exists.
 - Tests can be run with `go test ./...`.
 
-Milestone 1 has started:
+Milestone 1 is complete enough to proceed:
 
 - `internal/kconfig` contains the first KConfig parser implementation.
 - Parser tests cover nested groups, localized keys, flags, comments, blank lines, duplicate keys, malformed groups, and key-level diffs.
+- Sanitized committed fixtures and ignored local fixtures both support parser round-trip testing.
 
-Most CLI commands currently print "not implemented yet". That is deliberate. The next milestone after parser hardening is allowlist loading and live discovery.
+Milestone 2 has started:
+
+- Embedded allowlist loading and validation exists.
+- Safe live-root path joining exists.
+- `doctor` and `inspect-live` perform read-only discovery.
+
+Save, diff, list, and apply currently print "not implemented yet". That is deliberate.
 
 ## Install from source
 

@@ -25,9 +25,6 @@ func TestLocalKDEFixturesParseAndRoundTrip(t *testing.T) {
 			path := filepath.Join("testdata", "local", fixture)
 			original, err := os.ReadFile(path)
 			if err != nil {
-				if os.IsNotExist(err) {
-					t.Skipf("fixture missing: %s", path)
-				}
 				t.Fatalf("read fixture %s: %v", path, err)
 			}
 
