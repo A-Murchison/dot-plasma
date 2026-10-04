@@ -47,5 +47,6 @@ make the suite faster.
 - cmd/migrate: write migrations, never run them. A human runs migrations.
 
 ## Project
-- Ensure the CONTRIBUTING.md is up-to-date.
+- Ensure `CONTRIBUTING.md` is up-to-date.
+- Keep `README.md` up-to-date for end users: lead with what the tool lets them do, keep it informative and concise, avoid hype/cringe, and include only content that helps someone decide whether and how to use the tool.
 - Use conventional commits for commit messages.
