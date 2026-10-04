@@ -34,6 +34,7 @@ func runDoctor(ctx context.Context, stdout io.Writer, out string) error {
 	healthy = printPathCheck(stdout, "config root", roots.Config, false) && healthy
 	healthy = printPathCheck(stdout, "local-share root", roots.LocalShare, false) && healthy
 	healthy = printPathCheck(stdout, "output dir", out, true) && healthy
+	healthy = printAllowlistedFilesCheck(stdout, list, roots) && healthy
 	printPlasmaVersion(ctx, stdout)
 	if !healthy {
 		return fmt.Errorf("doctor found problems")
@@ -68,6 +69,80 @@ func runInspectLive(stdout io.Writer) error {
 		return fmt.Errorf("flush inspect-live output: %w", err)
 	}
 	return nil
+}
+
+type allowlistedFilesCheck struct {
+	Total           int
+	Present         int
+	MissingOptional int
+	MissingRequired int
+	Errors          int
+}
+
+func printAllowlistedFilesCheck(stdout io.Writer, list *allowlist.Allowlist, roots paths.LiveRoots) bool {
+	check, err := checkAllowlistedFiles(list, roots)
+	if err != nil {
+		fmt.Fprintf(stdout, "allowlisted files: error (%s)\n", err.Error())
+		return false
+	}
+
+	status := "ok"
+	healthy := true
+	if check.MissingRequired > 0 || check.Errors > 0 {
+		status = "problems"
+		healthy = false
+	}
+	fmt.Fprintf(
+		stdout,
+		"allowlisted files: %s (%d total, %d present, %d missing optional, %d missing required, %d errors)\n",
+		status,
+		check.Total,
+		check.Present,
+		check.MissingOptional,
+		check.MissingRequired,
+		check.Errors,
+	)
+	return healthy
+}
+
+func checkAllowlistedFiles(list *allowlist.Allowlist, roots paths.LiveRoots) (allowlistedFilesCheck, error) {
+	var check allowlistedFilesCheck
+	for _, file := range allowlist.SortedFiles(list.Files) {
+		check.Total++
+		livePath, err := roots.Join(file.Root, file.Path)
+		if err != nil {
+			return check, fmt.Errorf("resolve %s/%s: %w", file.Root, file.Path, err)
+		}
+
+		info, err := os.Stat(livePath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				if file.Required {
+					check.MissingRequired++
+				} else {
+					check.MissingOptional++
+				}
+				continue
+			}
+			check.Errors++
+			continue
+		}
+		if info.IsDir() {
+			check.Errors++
+			continue
+		}
+		liveFile, err := os.Open(livePath)
+		if err != nil {
+			check.Errors++
+			continue
+		}
+		if err := liveFile.Close(); err != nil {
+			check.Errors++
+			continue
+		}
+		check.Present++
+	}
+	return check, nil
 }
 
 func printPlasmaVersion(ctx context.Context, stdout io.Writer) {

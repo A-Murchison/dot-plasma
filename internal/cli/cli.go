@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"dot-plasma/internal/profile"
+
 	"github.com/spf13/cobra"
 )
 
@@ -50,8 +52,7 @@ func newSaveCommand(stdout io.Writer) *cobra.Command {
 		Short: "Save allowlisted live Plasma config into a profile",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintf(stdout, "save is not implemented yet\nprofile: %s\nout: %s\ndry-run: %t\n", args[0], out, dryRun)
-			return nil
+			return runSave(cmd.Context(), stdout, profile.SaveOptions{Profile: args[0], Out: out, DryRun: dryRun})
 		},
 	}
 	cmd.Flags().StringVar(&out, "out", ".", "output directory")
@@ -68,12 +69,11 @@ func newDiffCommand(stdout io.Writer) *cobra.Command {
 		Short: "Compare a saved profile against the live system",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			profile := "<auto>"
+			profileName := ""
 			if len(args) == 1 {
-				profile = args[0]
+				profileName = args[0]
 			}
-			fmt.Fprintf(stdout, "diff is not implemented yet\nprofile: %s\nout: %s\nformat: %s\n", profile, out, format)
-			return nil
+			return runDiff(cmd.Context(), stdout, profile.DiffOptions{Profile: profileName, Out: out}, format)
 		},
 	}
 	cmd.Flags().StringVar(&out, "out", ".", "output directory")

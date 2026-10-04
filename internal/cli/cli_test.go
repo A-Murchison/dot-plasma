@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"dot-plasma/internal/paths"
+	"dot-plasma/internal/profile"
 )
 
 func TestRunHelp(t *testing.T) {
@@ -99,6 +102,7 @@ func TestRunDiscoveryCommands(t *testing.T) {
 				"config root:",
 				"local-share root:",
 				"output dir: ok",
+				"allowlisted files:",
 				"plasma version:",
 			},
 		},
@@ -165,6 +169,60 @@ func TestDoctorReportsInvalidOutputDirectory(t *testing.T) {
 	}
 }
 
+func TestRunDiffReportsDifferences(t *testing.T) {
+	t.Parallel()
+
+	configRoot := t.TempDir()
+	out := t.TempDir()
+	roots := paths.LiveRoots{Config: configRoot, LocalShare: t.TempDir()}
+	writeCLITestFile(t, filepath.Join(configRoot, "kdeglobals"), "[General]\nColorScheme=BreezeDark\n")
+	_, err := profile.Save(context.Background(), profile.SaveOptions{Profile: "work", Out: out, Roots: roots})
+	if err != nil {
+		t.Fatalf("Save returned error: %s", err.Error())
+	}
+	writeCLITestFile(t, filepath.Join(configRoot, "kdeglobals"), "[General]\nColorScheme=BreezeLight\n")
+
+	var stdout bytes.Buffer
+	err = runDiff(context.Background(), &stdout, profile.DiffOptions{Profile: "work", Out: out, Roots: roots}, "text")
+	if err == nil {
+		t.Fatal("runDiff returned nil error")
+	}
+	if ExitCode(err) != 1 {
+		t.Fatalf("ExitCode = %d, want 1", ExitCode(err))
+	}
+	got := stdout.String()
+	for _, want := range []string{"profile: work", "differences: 1", "changed key config/kdeglobals General/ColorScheme"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("runDiff output = %q, want containing %q", got, want)
+		}
+	}
+}
+
+func TestRunDiffRejectsUnsupportedFormat(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := Run(context.Background(), []string{"diff", "work", "--format", "json"}, &stdout, &stderr)
+	if err == nil {
+		t.Fatal("Run returned nil error")
+	}
+	if !strings.Contains(err.Error(), `unsupported diff format "json"`) {
+		t.Fatalf("Run error = %s, want unsupported format", err.Error())
+	}
+}
+
+func writeCLITestFile(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatalf("create test dir: %s", err.Error())
+	}
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatalf("write test file %s: %s", path, err.Error())
+	}
+}
+
 func TestRunCommands(t *testing.T) {
 	t.Parallel()
 
@@ -181,13 +239,14 @@ func TestRunCommands(t *testing.T) {
 			},
 		},
 		{
-			name: "save flag plumbing",
+			name: "save dry run",
 			args: []string{"save", "work", "--out", "/tmp/profiles", "--dry-run"},
 			wantOutput: []string{
-				"save is not implemented yet",
+				"privacy: saved Plasma configuration may contain personal or machine-specific data",
+				"dry run: no files written",
 				"profile: work",
-				"out: /tmp/profiles",
-				"dry-run: true",
+				"profile dir: /tmp/profiles/profiles/work",
+				"kdeglobals",
 			},
 		},
 		{
@@ -198,24 +257,6 @@ func TestRunCommands(t *testing.T) {
 				"profile: work",
 				"out: /tmp/profiles",
 				"dry-run: true",
-			},
-		},
-		{
-			name: "diff default profile and format flag",
-			args: []string{"diff", "--out", "/tmp/profiles", "--format", "json"},
-			wantOutput: []string{
-				"diff is not implemented yet",
-				"profile: <auto>",
-				"out: /tmp/profiles",
-				"format: json",
-			},
-		},
-		{
-			name: "diff explicit profile",
-			args: []string{"diff", "work"},
-			wantOutput: []string{
-				"profile: work",
-				"format: text",
 			},
 		},
 		{
