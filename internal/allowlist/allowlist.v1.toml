@@ -1,0 +1,54 @@
+# Initial conservative allowlist for dotplasma.
+# This file is data first; loading/validation arrives in Milestone 2.
+#
+# Fields:
+# - root: "config" maps to ~/.config, "local-share" maps to ~/.local/share
+# - path: relative path under the root
+# - required: missing optional files do not fail save/diff
+# - parser: "kconfig" for KDE config syntax, "raw-copy" for uninterpreted files
+# - volatile: group/key patterns to strip or ignore during normalized snapshots
+
+version = 1
+
+[[files]]
+root = "config"
+path = "kdeglobals"
+required = false
+parser = "kconfig"
+notes = "Global KDE settings such as theme, colors, fonts, icons, and UI behavior."
+volatile = []
+
+[[files]]
+root = "config"
+path = "kwinrc"
+required = false
+parser = "kconfig"
+notes = "KWin window manager settings, effects, virtual desktops, and shortcuts-adjacent behavior."
+volatile = []
+
+[[files]]
+root = "config"
+path = "plasmarc"
+required = false
+parser = "kconfig"
+notes = "General Plasma shell settings."
+volatile = []
+
+[[files]]
+root = "config"
+path = "plasma-org.kde.plasma.desktop-appletsrc"
+required = false
+parser = "kconfig"
+notes = "Panel, widget, containment, and desktop layout configuration. High value but also noisy."
+volatile = [
+  "Containments/*/lastScreen",
+  "Containments/*/Applets/*/Configuration/PreloadWeight",
+]
+
+[[files]]
+root = "config"
+path = "kscreenlockerrc"
+required = false
+parser = "kconfig"
+notes = "Screen locking behavior and appearance."
+volatile = []
