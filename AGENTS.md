@@ -34,6 +34,13 @@ make the suite faster.
   slices/maps packages, log/slog not logrus, math/rand/v2.
 - No dependency injection framework. Wire it explicitly in main().
 
+## Project planning
+- Keep `Plan.md` updated as implementation decisions are made.
+- Do not add large new scope to `Plan.md` without asking.
+- It is okay to add small implementation notes, status updates, risks, and deferred ideas when they help future work.
+- Prefer marking ideas as future/deferred instead of mixing them into the current milestone.
+- When finishing or starting a milestone, update its status in `Plan.md`.
+
 ## Landmines
 - internal/scheduler is leader-elected. Changing tick timing needs an ops review.
 - internal/proto is generated. Edit the .proto and run `make proto`.

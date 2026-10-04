@@ -2,7 +2,6 @@
 package kconfig
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"sort"
@@ -11,7 +10,8 @@ import (
 
 // Document is a parsed KConfig document. Lines preserve file order.
 type Document struct {
-	Lines []Line
+	Lines           []Line
+	HasFinalNewline bool
 }
 
 // LineKind describes the kind of parsed line.
@@ -78,14 +78,26 @@ const (
 
 // Parse reads a KConfig document from r.
 func Parse(r io.Reader) (*Document, error) {
-	scanner := bufio.NewScanner(r)
-	var lines []Line
-	var currentGroup []string
-	lineNum := 0
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("read kconfig: %w", err)
+	}
 
-	for scanner.Scan() {
-		lineNum++
-		raw := scanner.Text()
+	content := string(data)
+	hasFinalNewline := strings.HasSuffix(content, "\n")
+	if hasFinalNewline {
+		content = strings.TrimSuffix(content, "\n")
+	}
+	if content == "" {
+		return &Document{HasFinalNewline: hasFinalNewline}, nil
+	}
+
+	rawLines := strings.Split(content, "\n")
+	lines := make([]Line, 0, len(rawLines))
+	var currentGroup []string
+
+	for idx, raw := range rawLines {
+		lineNum := idx + 1
 		trimmed := strings.TrimSpace(raw)
 
 		line := Line{Raw: raw, LineNum: lineNum}
@@ -114,17 +126,14 @@ func Parse(r io.Reader) (*Document, error) {
 		}
 		lines = append(lines, line)
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("scan kconfig: %w", err)
-	}
 
-	return &Document{Lines: lines}, nil
+	return &Document{Lines: lines, HasFinalNewline: hasFinalNewline}, nil
 }
 
 // String serializes the document in a stable KConfig representation.
 func (d *Document) String() string {
 	var b strings.Builder
-	for _, line := range d.Lines {
+	for idx, line := range d.Lines {
 		switch line.Kind {
 		case LineBlank, LineComment:
 			b.WriteString(line.Raw)
@@ -133,7 +142,9 @@ func (d *Document) String() string {
 		case LineKey:
 			b.WriteString(formatKey(line.Key))
 		}
-		b.WriteByte('\n')
+		if idx < len(d.Lines)-1 || d.HasFinalNewline {
+			b.WriteByte('\n')
+		}
 	}
 	return b.String()
 }

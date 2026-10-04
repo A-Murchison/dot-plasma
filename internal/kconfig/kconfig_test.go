@@ -1,9 +1,46 @@
 package kconfig
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestCommittedFixturesParseAndRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	fixtures, err := filepath.Glob(filepath.Join("testdata", "fixtures", "*.kconf"))
+	if err != nil {
+		t.Fatalf("glob fixtures: %v", err)
+	}
+	if len(fixtures) == 0 {
+		t.Fatal("no committed KConfig fixtures found")
+	}
+
+	for _, fixture := range fixtures {
+		fixture := fixture
+		t.Run(filepath.Base(fixture), func(t *testing.T) {
+			t.Parallel()
+
+			original, err := os.ReadFile(fixture)
+			if err != nil {
+				t.Fatalf("read fixture %s: %v", fixture, err)
+			}
+
+			doc, err := Parse(strings.NewReader(string(original)))
+			if err != nil {
+				t.Fatalf("Parse returned error for %s: %v", fixture, err)
+			}
+			if len(original) > 0 && len(doc.Lines) == 0 {
+				t.Fatalf("parsed zero lines for non-empty fixture %s", fixture)
+			}
+			if got := doc.String(); got != string(original) {
+				t.Fatalf("round trip mismatch for %s", fixture)
+			}
+		})
+	}
+}
 
 func TestParseRoundTripNestedGroupsLocalesAndFlags(t *testing.T) {
 	t.Parallel()
