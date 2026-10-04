@@ -1,32 +1,9 @@
 # dotplasma
 
-`dotplasma` is a Go CLI for saving, comparing, and eventually restoring KDE Plasma configuration using a plain folder layout that users can commit to Git themselves.
+`dotplasma` is a conservative CLI for inspecting, saving, comparing, and eventually restoring KDE Plasma configuration.
 
-The project is intentionally conservative: backup and diff come first; restore comes later.
+It is designed around a plain folder layout so you can put the generated output under Git yourself. `dotplasma` does not create commits, contact remotes, require root, or sync data to a cloud service.
 
-## Current status
-
-Milestone 0 is complete:
-
-- Go module exists.
-- Cobra CLI skeleton exists.
-- Initial command surface exists.
-- Initial allowlist data file exists.
-- Tests can be run with `go test ./...`.
-
-Milestone 1 is complete enough to proceed:
-
-- `internal/kconfig` contains the first KConfig parser implementation.
-- Parser tests cover nested groups, localized keys, flags, comments, blank lines, duplicate keys, malformed groups, and key-level diffs.
-- Sanitized committed fixtures and ignored local fixtures both support parser round-trip testing.
-
-Milestone 2 has started:
-
-- Embedded allowlist loading and validation exists.
-- Safe live-root path joining exists.
-- `doctor` and `inspect-live` perform read-only discovery.
-
-Save, diff, list, and apply currently print "not implemented yet". That is deliberate.
 
 ## Install from source
 
@@ -34,22 +11,64 @@ Save, diff, list, and apply currently print "not implemented yet". That is delib
 go install ./cmd/dotplasma
 ```
 
-Or run locally:
+Or run from a checkout:
 
 ```sh
 go run ./cmd/dotplasma --help
 ```
 
-## Commands planned
+## Basic usage
+
+Check whether the local machine looks usable for `dotplasma`:
+
+```sh
+dotplasma doctor
+```
+
+Check a specific output directory:
+
+```sh
+dotplasma doctor --out ~/dotfiles
+```
+
+Show which known Plasma configuration files exist on the live system:
+
+```sh
+dotplasma inspect-live
+```
+
+Example output:
 
 ```text
+ROOT    PATH                                     STATUS   REQUIRED  PARSER
+config  kdeglobals                               present  false     kconfig
+config  kwinrc                                   present  false     kconfig
+config  plasma-org.kde.plasma.desktop-appletsrc  present  false     kconfig
+```
+
+## Command overview
+
+```text
+dotplasma doctor [--out DIR]
+dotplasma inspect-live
 dotplasma save <profile> [--out DIR] [--dry-run]
 dotplasma diff [profile] [--out DIR] [--format text|json]
 dotplasma list [--out DIR]
-dotplasma doctor
-dotplasma inspect-live
 dotplasma apply <profile> [--out DIR] [--dry-run]
 ```
+
+Currently implemented:
+
+- `doctor`: validates the embedded allowlist, live roots, output directory, and Plasma version detection.
+- `inspect-live`: lists allowlisted live files and whether they are present.
+- `version`: prints the `dotplasma` version.
+
+Still in development:
+
+- `save`
+- `diff`
+- `list`
+- `apply`
 
 ## Safety rules
 
@@ -58,18 +77,29 @@ dotplasma apply <profile> [--out DIR] [--dry-run]
 - No automatic Git integration.
 - Every writing command must support `--dry-run`.
 - Live writes are limited to `~/.config` and `~/.local/share`.
-- Output must be deterministic because users are expected to commit snapshots.
+- Output is intended to be deterministic so users can commit snapshots to Git.
+- Restore/apply behavior will remain conservative and will require backups first.
 
-## Development
+## Intended output layout
 
-```sh
-go test ./...
+Profiles are planned to be stored under an output directory like this:
+
+```text
+profiles/<profile>/
+  profile.toml
+  README.md
+  files/
+    config/
+      kdeglobals
+      kwinrc
+      plasmarc
+      plasma-org.kde.plasma.desktop-appletsrc
+  manifests/
+    files.toml
+    ignored.toml
+    environment.toml
 ```
 
-If available locally, run:
+## Contributing
 
-```sh
-make check
-```
-
-See `Plan.md` for the implementation roadmap.
+See `CONTRIBUTING.md` for development commands and `Plan.md` for the implementation roadmap.

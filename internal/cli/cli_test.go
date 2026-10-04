@@ -3,6 +3,8 @@ package cli
 import (
 	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -77,6 +79,89 @@ func TestRunRejectsInvalidArguments(t *testing.T) {
 				t.Fatalf("Run error = %v, want containing %q", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestRunDiscoveryCommands(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		args       []string
+		wantOutput []string
+	}{
+		{
+			name: "doctor",
+			args: []string{"doctor", "--out", t.TempDir()},
+			wantOutput: []string{
+				"dotplasma doctor",
+				"allowlist: ok (version 1, 5 files)",
+				"config root:",
+				"local-share root:",
+				"output dir: ok",
+				"plasma version:",
+			},
+		},
+		{
+			name: "inspect-live",
+			args: []string{"inspect-live"},
+			wantOutput: []string{
+				"ROOT",
+				"PATH",
+				"STATUS",
+				"REQUIRED",
+				"PARSER",
+				"config",
+				"kdeglobals",
+				"kwinrc",
+				"plasma-org.kde.plasma.desktop-appletsrc",
+				"kconfig",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			err := Run(context.Background(), tt.args, &stdout, &stderr)
+			if err != nil {
+				t.Fatalf("Run returned error: %v", err)
+			}
+			got := stdout.String()
+			for _, want := range tt.wantOutput {
+				if !strings.Contains(got, want) {
+					t.Fatalf("Run output = %q, want containing %q", got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestDoctorReportsInvalidOutputDirectory(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(path, []byte("not a directory"), 0o600); err != nil {
+		t.Fatalf("write test output file: %s", err.Error())
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := Run(context.Background(), []string{"doctor", "--out", path}, &stdout, &stderr)
+	if err == nil {
+		t.Fatal("Run returned nil error")
+	}
+	if !strings.Contains(err.Error(), "doctor found problems") {
+		t.Fatalf("Run error = %s, want doctor found problems", err.Error())
+	}
+	got := stdout.String()
+	if !strings.Contains(got, "output dir: not a directory") {
+		t.Fatalf("Run output = %q, want output dir problem", got)
 	}
 }
 

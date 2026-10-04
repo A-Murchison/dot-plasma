@@ -105,7 +105,7 @@ func newDoctorCommand(stdout io.Writer) *cobra.Command {
 		Short: "Check local environment and project assumptions",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runDoctor(stdout, out)
+			return runDoctor(cmd.Context(), stdout, out)
 		},
 	}
 	cmd.Flags().StringVar(&out, "out", ".", "output directory")
