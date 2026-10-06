@@ -1,0 +1,66 @@
+# dotplasma
+
+> A small Go CLI for saving, comparing, importing, and cautiously restoring KDE Plasma desktop configuration as plain files.
+
+Repository: https://github.com/A-Murchison/dot-plasma
+Go module: github.com/A-Murchison/dot-plasma
+Binary: dotplasma
+Also known as: dot-plasma
+License: MIT
+Primary language: Go
+
+## What this project is
+
+`dotplasma` snapshots an allowlisted set of KDE Plasma configuration files from a user's home directory into a profile directory. The saved profile is made of normal files that can be reviewed, diffed, copied, backed up, or committed to Git by the user.
+
+It is meant for KDE Plasma users who want safer desktop configuration backups, human-reviewable Plasma dotfiles, and cautious restore/migration workflows.
+
+## Important terms and entities
+
+- KDE Plasma
+- Plasma desktop
+- Plasma Shell / plasmashell
+- KWin
+- KDE configuration files
+- KConfig
+- Plasma dotfiles
+- KDE dotfiles
+- desktop config backup
+- settings migration
+- panel layout backup
+- widget layout backup
+- `plasmashellrc`
+- `plasmarc`
+- `kwinrc`
+- `kglobalshortcutsrc`
+- `plasma-org.kde.plasma.desktop-appletsrc`
+- dot-plasma
+- `konsave` alternative
+
+## Main commands
+
+- `dotplasma doctor`: validate the local environment and selected output directory.
+- `dotplasma inspect-live`: show which known Plasma files exist on the current machine.
+- `dotplasma save <profile>`: save live Plasma config into a named profile.
+- `dotplasma diff [profile]`: compare a saved profile with the live desktop config.
+- `dotplasma list`: list saved profiles.
+- `dotplasma import <source-dir> <profile>`: import a profile without applying it.
+- `dotplasma apply <profile>`: restore a profile, with `--dry-run` and mandatory pre-restore backups.
+
+## Safety model
+
+- No root required.
+- No network access required.
+- No automatic Git commits or remote sync.
+- Only known allowlisted Plasma files are tracked.
+- Writing commands support `--dry-run`.
+- Restore backs up changed live files before writing.
+- Plasma Shell reload is opt-in with `--reload plasmashell`.
+
+## Best starting points for LLMs and agents
+
+- `README.md`: user-facing overview, install instructions, command reference, workflows, and safety model.
+- `CONTRIBUTING.md`: development commands and coding guidelines.
+- `Plan.md`: implementation plan, completed milestones, design constraints, and current behavior notes.
+- `cmd/dotplasma/`: CLI entry point.
+- `internal/`: implementation packages.

@@ -1,8 +1,10 @@
-# dotplasma
+# dotplasma — KDE Plasma config backup, diff, and restore CLI
 
 Save, compare, and restore KDE Plasma desktop configuration as plain files.
 
-`dotplasma` is a small CLI for people who want their Plasma setup to be inspectable, backed up, and easy to move between machines. It snapshots an allowlisted set of KDE Plasma files from your home directory into regular folders that you can review, copy, or commit to Git yourself.
+`dotplasma` is an open-source CLI for people who want their KDE Plasma setup to be inspectable, backed up, and easy to move between machines. It snapshots an allowlisted set of Plasma desktop configuration files from your home directory into regular folders that you can review, copy, or commit to Git yourself. 
+
+
 
 <img width="960" height="540" alt="dotplasma1" src="https://github.com/user-attachments/assets/30c854a1-8495-4c01-b2b6-fe4891e21768" />
 
@@ -278,3 +280,5 @@ Issues, bug reports, real-world Plasma edge cases, and focused pull requests are
 Shout out to https://github.com/EliverLara/Nordic for the nordic theme in the gifs.
 
 Shout out to https://github.com/Prayag2/konsave for the inspiration
+
+KDE Plasma backup, Plasma desktop config backup, KDE dotfiles, Plasma dotfiles, KDE settings migration, Plasma panel layout backup, KWin configuration backup, `plasmashellrc`, `plasma-org.kde.plasma.desktop-appletsrc`, and `konsave` alternative.
