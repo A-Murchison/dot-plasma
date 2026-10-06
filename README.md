@@ -6,14 +6,15 @@ Save, compare, and restore KDE Plasma desktop configuration as plain files.
 
 <img width="960" height="540" alt="dotplasma1" src="https://github.com/user-attachments/assets/30c854a1-8495-4c01-b2b6-fe4891e21768" />
 
-## Why use it?
 
-KDE Plasma stores desktop state across several config files. That makes it hard to answer simple questions like:
+## Good fit
 
-- What changed after I edited my panels, shortcuts, widgets, or desktop layout?
-- Can I back up my Plasma setup without a cloud account or root access?
-- Can I review a desktop profile before applying it on another machine?
-- Can I keep my desktop configuration in Git without guessing which files matter?
+`dotplasma` is most useful when you want to:
+
+- keep a known-good Plasma layout before experimenting with panels, widgets, shortcuts, or desktop settings;
+- review what changed in Plasma's config files before committing dotfiles;
+- back up and restore Plasma configuration on the same machine;
+- move a profile between similar Plasma installations while reviewing it before applying.
 
 `dotplasma` focuses on that workflow: snapshot, diff, review, and only then restore if you choose to.
 
@@ -27,27 +28,29 @@ KDE Plasma stores desktop state across several config files. That makes it hard 
 - **Conservative file scope** using an allowlist of known Plasma config files.
 - **No root and no network access** required.
 
-## Good fit
+## Commands
 
-`dotplasma` is most useful when you want to:
-
-- keep a known-good Plasma layout before experimenting with panels, widgets, shortcuts, or desktop settings;
-- review what changed in Plasma's config files before committing dotfiles;
-- back up and restore Plasma configuration on the same machine;
-- move a profile between similar Plasma installations while reviewing it before applying.
-
-## What gets captured?
-
-`dotplasma` tracks an allowlisted set of KDE Plasma configuration files, including files related to panels, widgets, desktop layout, shortcuts, Plasma Shell, KWin, and display/layout state where supported.
-
-Run this to see exactly which tracked files exist on your machine:
-
-```sh
-dotplasma inspect-live
+```text
+dotplasma [--config PATH] doctor [--out DIR]
+dotplasma [--config PATH] inspect-live
+dotplasma [--config PATH] save <profile> [--out DIR] [--dry-run]
+dotplasma [--config PATH] diff [profile] [--out DIR] [--format text] [--color auto|always|never] [--verbose]
+dotplasma [--config PATH] list [--out DIR]
+dotplasma [--config PATH] import <source-dir> <profile> [--out DIR] [--dry-run]
+dotplasma [--config PATH] apply <profile> [--out DIR] [--dry-run] [--reload none|plasmashell]
+dotplasma [--config PATH] version
 ```
 
-> [!WARNING]
-> Treat saved profiles as private. Plasma config can include local paths, widget settings, wallpaper paths, monitor layout details, and other machine-specific data. Review files before sharing or publishing them.
+Useful notes:
+
+- `diff` exits `0` when there are no differences, `1` when differences are found, and `2` for usage or runtime errors.
+- `list` shows saved profile names, captured Plasma version when available, distro when available, and saved time.
+- `apply` restores only manifest-listed files that are also present in the current allowlist.
+- `apply` refuses old or incomplete Plasma Shell layout snapshots that are missing required screen-binding data.
+- `--format json` for `diff` is reserved for future support; use the default text output today.
+- `diff` shows a changed-files summary by default. Add `--verbose` to show per-setting values in vertical detail blocks.
+- `diff --color auto` colorizes statuses only when writing to a terminal. Use `always` or `never` to override it.
+
 
 ## Install
 
@@ -126,7 +129,15 @@ dotplasma diff main
 dotplasma apply main --dry-run
 ```
 
-<!-- TODO: Add screenshot or GIF: diff output after changing a Plasma setting -->
+## What gets captured?
+
+`dotplasma` tracks an allowlisted set of KDE Plasma configuration files, including files related to panels, widgets, desktop layout, shortcuts, Plasma Shell, KWin, and display/layout state where supported.
+
+Run this to see exactly which tracked files exist on your machine:
+
+```sh
+dotplasma inspect-live
+```
 
 ## Common workflows
 
@@ -240,28 +251,6 @@ dotplasma-backups/
 
 You can inspect, copy, back up, or commit this directory yourself.
 
-## Commands
-
-```text
-dotplasma [--config PATH] doctor [--out DIR]
-dotplasma [--config PATH] inspect-live
-dotplasma [--config PATH] save <profile> [--out DIR] [--dry-run]
-dotplasma [--config PATH] diff [profile] [--out DIR] [--format text] [--color auto|always|never] [--verbose]
-dotplasma [--config PATH] list [--out DIR]
-dotplasma [--config PATH] import <source-dir> <profile> [--out DIR] [--dry-run]
-dotplasma [--config PATH] apply <profile> [--out DIR] [--dry-run] [--reload none|plasmashell]
-dotplasma [--config PATH] version
-```
-
-Useful notes:
-
-- `diff` exits `0` when there are no differences, `1` when differences are found, and `2` for usage or runtime errors.
-- `list` shows saved profile names, captured Plasma version when available, distro when available, and saved time.
-- `apply` restores only manifest-listed files that are also present in the current allowlist.
-- `apply` refuses old or incomplete Plasma Shell layout snapshots that are missing required screen-binding data.
-- `--format json` for `diff` is reserved for future support; use the default text output today.
-- `diff` shows a changed-files summary by default. Add `--verbose` to show per-setting values in vertical detail blocks.
-- `diff --color auto` colorizes statuses only when writing to a terminal. Use `always` or `never` to override it.
 
 ## Safety model
 
@@ -274,6 +263,11 @@ Useful notes:
 - Writing commands support `--dry-run`.
 - Restore creates backups before updating tracked live files.
 - Plasma Shell reload is opt-in.
+
+
+> [!WARNING]
+> Treat saved profiles as private. Plasma config can include local paths, widget settings, wallpaper paths, monitor layout details, and other machine-specific data. Review files before sharing or publishing them.
+
 
 ## Contributing
 
