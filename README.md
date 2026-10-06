@@ -4,7 +4,7 @@ Save, compare, and restore KDE Plasma desktop configuration as plain files.
 
 `dotplasma` is a small CLI for people who want their Plasma setup to be inspectable, backed up, and easy to move between machines. It snapshots an allowlisted set of KDE Plasma files from your home directory into regular folders that you can review, copy, or commit to Git yourself.
 
-![dotplasma CLI demo](assets/images/dotplasma1.GIF)
+<img width="960" height="540" alt="dotplasma1" src="https://github.com/user-attachments/assets/30c854a1-8495-4c01-b2b6-fe4891e21768" />
 
 ## Why use it?
 
