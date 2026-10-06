@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"dot-plasma/internal/paths"
+	"github.com/A-Murchison/dot-plasma/internal/paths"
 )
 
 func TestDiffLiveReportsKConfigKeyChanges(t *testing.T) {
@@ -34,6 +34,36 @@ func TestDiffLiveReportsKConfigKeyChanges(t *testing.T) {
 		t.Fatalf("unexpected diff: %#v", diff)
 	}
 	if diff.OldValue != "BreezeDark" || diff.NewValue != "BreezeLight" {
+		t.Fatalf("unexpected values: %#v", diff)
+	}
+}
+
+func TestDiffLiveReportsPlasmaShellPanelViewChanges(t *testing.T) {
+	t.Parallel()
+
+	configRoot := t.TempDir()
+	out := t.TempDir()
+	writeFile(t, filepath.Join(configRoot, "plasmashellrc"), "[PlasmaViews][Panel 1]\nfloating=0\n")
+
+	roots := paths.LiveRoots{Config: configRoot, LocalShare: t.TempDir()}
+	_, err := Save(context.Background(), SaveOptions{Profile: "work", Out: out, Roots: roots, Now: fixedNow})
+	if err != nil {
+		t.Fatalf("Save returned error: %s", err.Error())
+	}
+	writeFile(t, filepath.Join(configRoot, "plasmashellrc"), "[PlasmaViews][Panel 1]\nfloating=1\n")
+
+	result, err := DiffLive(context.Background(), DiffOptions{Profile: "work", Out: out, Roots: roots})
+	if err != nil {
+		t.Fatalf("DiffLive returned error: %s", err.Error())
+	}
+	if len(result.Differences) != 1 {
+		t.Fatalf("len(Differences) = %d, want 1: %#v", len(result.Differences), result.Differences)
+	}
+	diff := result.Differences[0]
+	if diff.Kind != "key" || diff.Status != "changed" || diff.Path != "plasmashellrc" || diff.Key != "floating" {
+		t.Fatalf("unexpected diff: %#v", diff)
+	}
+	if diff.OldValue != "0" || diff.NewValue != "1" {
 		t.Fatalf("unexpected values: %#v", diff)
 	}
 }

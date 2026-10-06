@@ -1,2 +1,4 @@
 internal/kconfig/testdata/local/
 Plan.md
+profiles/
+backups/

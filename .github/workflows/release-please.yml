@@ -1,0 +1,42 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Create release PR or GitHub release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run release-please
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          npx --yes release-please@17.11.2 release-pr \
+            --token "${GITHUB_TOKEN}" \
+            --repo-url "${GITHUB_REPOSITORY}" \
+            --target-branch "${GITHUB_REF_NAME}" \
+            --config-file release-please-config.json \
+            --manifest-file .release-please-manifest.json
+
+          npx --yes release-please@17.11.2 github-release \
+            --token "${GITHUB_TOKEN}" \
+            --repo-url "${GITHUB_REPOSITORY}" \
+            --target-branch "${GITHUB_REF_NAME}" \
+            --config-file release-please-config.json \
+            --manifest-file .release-please-manifest.json

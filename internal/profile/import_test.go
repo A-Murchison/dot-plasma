@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"dot-plasma/internal/paths"
+	"github.com/A-Murchison/dot-plasma/internal/paths"
 )
 
 func TestImportProfileCopiesValidatedProfile(t *testing.T) {

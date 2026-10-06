@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
-	"dot-plasma/internal/profile"
+	appconfig "github.com/A-Murchison/dot-plasma/internal/config"
+	"github.com/A-Murchison/dot-plasma/internal/profile"
 
 	"github.com/spf13/cobra"
 )
@@ -22,6 +24,8 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 
 // NewRootCommand builds the root command for tests and main.
 func NewRootCommand(stdout, stderr io.Writer) *cobra.Command {
+	var configPath string
+
 	cmd := &cobra.Command{
 		Use:           "dotplasma",
 		Short:         "Snapshot, compare, and restore KDE Plasma configuration",
@@ -31,39 +35,46 @@ func NewRootCommand(stdout, stderr io.Writer) *cobra.Command {
 	}
 	cmd.SetOut(stdout)
 	cmd.SetErr(stderr)
+	cmd.PersistentFlags().StringVar(&configPath, "config", "", "config file (default: ${XDG_CONFIG_HOME:-~/.config}/dotplasma/config.toml)")
 
-	cmd.AddCommand(newSaveCommand(stdout))
-	cmd.AddCommand(newDiffCommand(stdout))
-	cmd.AddCommand(newListCommand(stdout))
-	cmd.AddCommand(newDoctorCommand(stdout))
+	cmd.AddCommand(newSaveCommand(stdout, &configPath))
+	cmd.AddCommand(newDiffCommand(stdout, &configPath))
+	cmd.AddCommand(newListCommand(stdout, &configPath))
+	cmd.AddCommand(newDoctorCommand(stdout, &configPath))
 	cmd.AddCommand(newInspectLiveCommand(stdout))
-	cmd.AddCommand(newApplyCommand(stdout))
-	cmd.AddCommand(newImportCommand(stdout))
+	cmd.AddCommand(newApplyCommand(stdout, &configPath))
+	cmd.AddCommand(newImportCommand(stdout, &configPath))
 	cmd.AddCommand(newVersionCommand(stdout))
 
 	return cmd
 }
 
-func newSaveCommand(stdout io.Writer) *cobra.Command {
+func newSaveCommand(stdout io.Writer, configPath *string) *cobra.Command {
 	var out string
 	var dryRun bool
 
 	cmd := &cobra.Command{
 		Use:   "save <profile>",
 		Short: "Save allowlisted live Plasma config into a profile",
-		Args:  cobra.ExactArgs(1),
+		Args:  requireArgs("profile"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSave(cmd.Context(), stdout, profile.SaveOptions{Profile: args[0], Out: out, DryRun: dryRun})
+			resolvedOut, err := resolveOutputDir(*configPath, out)
+			if err != nil {
+				return err
+			}
+			return runSave(cmd.Context(), stdout, profile.SaveOptions{Profile: args[0], Out: resolvedOut, DryRun: dryRun})
 		},
 	}
-	cmd.Flags().StringVar(&out, "out", ".", "output directory")
+	cmd.Flags().StringVar(&out, "out", "", "output directory (default: ${XDG_CONFIG_HOME:-~/.config}/dotplasma; overrides config file)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "show what would be written without writing")
 	return cmd
 }
 
-func newDiffCommand(stdout io.Writer) *cobra.Command {
+func newDiffCommand(stdout io.Writer, configPath *string) *cobra.Command {
 	var out string
 	var format string
+	var color string
+	var verbose bool
 
 	cmd := &cobra.Command{
 		Use:   "diff [profile]",
@@ -74,15 +85,21 @@ func newDiffCommand(stdout io.Writer) *cobra.Command {
 			if len(args) == 1 {
 				profileName = args[0]
 			}
-			return runDiff(cmd.Context(), stdout, profile.DiffOptions{Profile: profileName, Out: out}, format)
+			resolvedOut, err := resolveOutputDir(*configPath, out)
+			if err != nil {
+				return err
+			}
+			return runDiff(cmd.Context(), stdout, profile.DiffOptions{Profile: profileName, Out: resolvedOut}, format, color, verbose)
 		},
 	}
-	cmd.Flags().StringVar(&out, "out", ".", "output directory")
+	cmd.Flags().StringVar(&out, "out", "", "output directory (default: ${XDG_CONFIG_HOME:-~/.config}/dotplasma; overrides config file)")
 	cmd.Flags().StringVar(&format, "format", "text", "output format: text or json")
+	cmd.Flags().StringVar(&color, "color", "auto", "colorize diff output: auto, always, or never")
+	cmd.Flags().BoolVar(&verbose, "verbose", false, "show per-setting diff details")
 	return cmd
 }
 
-func newListCommand(stdout io.Writer) *cobra.Command {
+func newListCommand(stdout io.Writer, configPath *string) *cobra.Command {
 	var out string
 
 	cmd := &cobra.Command{
@@ -90,15 +107,18 @@ func newListCommand(stdout io.Writer) *cobra.Command {
 		Short: "List saved profiles",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintf(stdout, "list is not implemented yet\nout: %s\n", out)
-			return nil
+			resolvedOut, err := resolveOutputDir(*configPath, out)
+			if err != nil {
+				return err
+			}
+			return runList(cmd.Context(), stdout, profile.ListOptions{Out: resolvedOut})
 		},
 	}
-	cmd.Flags().StringVar(&out, "out", ".", "output directory")
+	cmd.Flags().StringVar(&out, "out", "", "output directory (default: ${XDG_CONFIG_HOME:-~/.config}/dotplasma; overrides config file)")
 	return cmd
 }
 
-func newDoctorCommand(stdout io.Writer) *cobra.Command {
+func newDoctorCommand(stdout io.Writer, configPath *string) *cobra.Command {
 	var out string
 
 	cmd := &cobra.Command{
@@ -106,10 +126,14 @@ func newDoctorCommand(stdout io.Writer) *cobra.Command {
 		Short: "Check local environment and project assumptions",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runDoctor(cmd.Context(), stdout, out)
+			resolvedOut, err := resolveOutputDir(*configPath, out)
+			if err != nil {
+				return err
+			}
+			return runDoctor(cmd.Context(), stdout, resolvedOut)
 		},
 	}
-	cmd.Flags().StringVar(&out, "out", ".", "output directory")
+	cmd.Flags().StringVar(&out, "out", "", "output directory (default: ${XDG_CONFIG_HOME:-~/.config}/dotplasma; overrides config file)")
 	return cmd
 }
 
@@ -124,39 +148,93 @@ func newInspectLiveCommand(stdout io.Writer) *cobra.Command {
 	}
 }
 
-func newImportCommand(stdout io.Writer) *cobra.Command {
+func newImportCommand(stdout io.Writer, configPath *string) *cobra.Command {
 	var out string
 	var dryRun bool
 
 	cmd := &cobra.Command{
 		Use:   "import <source-dir> <profile>",
 		Short: "Import a received profile without applying it",
-		Args:  cobra.ExactArgs(2),
+		Args:  requireArgs("source-dir", "profile"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runImport(cmd.Context(), stdout, profile.ImportOptions{SourceDir: args[0], Profile: args[1], Out: out, DryRun: dryRun})
+			resolvedOut, err := resolveOutputDir(*configPath, out)
+			if err != nil {
+				return err
+			}
+			return runImport(cmd.Context(), stdout, profile.ImportOptions{SourceDir: args[0], Profile: args[1], Out: resolvedOut, DryRun: dryRun})
 		},
 	}
-	cmd.Flags().StringVar(&out, "out", ".", "output directory")
+	cmd.Flags().StringVar(&out, "out", "", "output directory (default: ${XDG_CONFIG_HOME:-~/.config}/dotplasma; overrides config file)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "show what would be written without writing")
 	return cmd
 }
 
-func newApplyCommand(stdout io.Writer) *cobra.Command {
+func newApplyCommand(stdout io.Writer, configPath *string) *cobra.Command {
 	var out string
 	var dryRun bool
+	var reload string
 
 	cmd := &cobra.Command{
 		Use:   "apply <profile>",
 		Short: "Restore a saved profile to the live system",
-		Args:  cobra.ExactArgs(1),
+		Args:  requireArgs("profile"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintf(stdout, "apply is not implemented yet\nprofile: %s\nout: %s\ndry-run: %t\n", args[0], out, dryRun)
-			return nil
+			resolvedOut, err := resolveOutputDir(*configPath, out)
+			if err != nil {
+				return err
+			}
+			return runApply(cmd.Context(), stdout, profile.ApplyOptions{Profile: args[0], Out: resolvedOut, DryRun: dryRun}, reload)
 		},
 	}
-	cmd.Flags().StringVar(&out, "out", ".", "output directory")
+	cmd.Flags().StringVar(&out, "out", "", "output directory (default: ${XDG_CONFIG_HOME:-~/.config}/dotplasma; overrides config file)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "show what would be written without writing")
+	cmd.Flags().StringVar(&reload, "reload", "none", "reload after applying: none or plasmashell")
 	return cmd
+}
+
+func requireArgs(names ...string) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) == len(names) {
+			return nil
+		}
+
+		usage := conciseUsage(cmd)
+		if len(args) > len(names) {
+			return fmt.Errorf("too many arguments\nusage: %s", usage)
+		}
+
+		missing := names[len(args):]
+		if len(missing) == 1 {
+			return fmt.Errorf("missing %s argument\nusage: %s", missing[0], usage)
+		}
+		return fmt.Errorf("missing %s arguments\nusage: %s", strings.Join(missing, " and "), usage)
+	}
+}
+
+func conciseUsage(cmd *cobra.Command) string {
+	use := cmd.Use
+	if idx := strings.IndexByte(use, ' '); idx >= 0 {
+		return cmd.CommandPath() + use[idx:]
+	}
+	return cmd.CommandPath()
+}
+
+func resolveOutputDir(configPath, flagOut string) (string, error) {
+	if flagOut != "" {
+		return flagOut, nil
+	}
+	cfg, _, err := appconfig.LoadOptional(configPath)
+	if err != nil {
+		return "", err
+	}
+	if cfg.OutputDir != "" {
+		return cfg.OutputDir, nil
+	}
+	defaultOut, err := appconfig.DefaultOutputDir()
+	if err != nil {
+		return "", err
+	}
+	return defaultOut, nil
 }
 
 func newVersionCommand(stdout io.Writer) *cobra.Command {

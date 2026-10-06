@@ -1,0 +1,87 @@
+name: Release Assets
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-assets-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  release-assets:
+    name: Build and upload release assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Test
+        run: go test -race -count=1 -timeout 60s ./...
+
+      - name: Build release archives
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          version="${RELEASE_TAG}"
+          mkdir -p dist build
+
+          targets=(
+            "linux amd64"
+            "linux arm64"
+            "darwin amd64"
+            "darwin arm64"
+            "windows amd64"
+            "windows arm64"
+          )
+
+          for target in "${targets[@]}"; do
+            read -r goos goarch <<<"${target}"
+            name="dotplasma_${version}_${goos}_${goarch}"
+            out_dir="build/${name}"
+            mkdir -p "${out_dir}"
+
+            binary="dotplasma"
+            if [[ "${goos}" == "windows" ]]; then
+              binary="dotplasma.exe"
+            fi
+
+            CGO_ENABLED=0 GOOS="${goos}" GOARCH="${goarch}" \
+              go build -trimpath -ldflags "-s -w" -o "${out_dir}/${binary}" ./cmd/dotplasma
+
+            cp README.md "${out_dir}/"
+            if [[ -f LICENSE ]]; then
+              cp LICENSE "${out_dir}/"
+            fi
+
+            if [[ "${goos}" == "windows" ]]; then
+              (cd build && zip -qr "../dist/${name}.zip" "${name}")
+            else
+              tar -C build -czf "dist/${name}.tar.gz" "${name}"
+            fi
+          done
+
+          (cd dist && sha256sum * > checksums.txt)
+
+      - name: Upload release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "${RELEASE_TAG}" dist/* --clobber

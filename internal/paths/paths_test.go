@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"dot-plasma/internal/allowlist"
+	"github.com/A-Murchison/dot-plasma/internal/allowlist"
 )
 
 func TestJoin(t *testing.T) {

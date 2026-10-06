@@ -13,10 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"dot-plasma/internal/allowlist"
-	"dot-plasma/internal/kconfig"
-	"dot-plasma/internal/paths"
-	"dot-plasma/internal/plasma"
+	"github.com/A-Murchison/dot-plasma/internal/allowlist"
+	"github.com/A-Murchison/dot-plasma/internal/kconfig"
+	"github.com/A-Murchison/dot-plasma/internal/paths"
+	"github.com/A-Murchison/dot-plasma/internal/plasma"
+	"github.com/A-Murchison/dot-plasma/internal/platform"
 )
 
 type SaveOptions struct {
@@ -140,58 +141,15 @@ func saveFile(opts SaveOptions, profileDir string, file allowlist.File) (Action,
 func normalizeFile(file allowlist.File, data []byte) ([]byte, error) {
 	switch file.Parser {
 	case allowlist.ParserKConfig:
-		doc, err := kconfig.Parse(bytes.NewReader(data))
-		if err != nil {
+		if _, err := kconfig.Parse(bytes.NewReader(data)); err != nil {
 			return nil, err
 		}
-		stripVolatile(doc, file.Volatile)
-		return []byte(doc.String()), nil
+		return append([]byte(nil), data...), nil
 	case allowlist.ParserRawCopy:
 		return append([]byte(nil), data...), nil
 	default:
 		return nil, fmt.Errorf("unsupported parser %q", file.Parser)
 	}
-}
-
-func stripVolatile(doc *kconfig.Document, patterns []string) {
-	if len(patterns) == 0 {
-		return
-	}
-	lines := doc.Lines[:0]
-	for _, line := range doc.Lines {
-		if line.Kind == kconfig.LineKey && volatileMatch(patterns, line.Key.Group, line.Key.Name) {
-			continue
-		}
-		lines = append(lines, line)
-	}
-	doc.Lines = lines
-}
-
-func volatileMatch(patterns []string, group []string, key string) bool {
-	for _, pattern := range patterns {
-		parts := strings.Split(pattern, "/")
-		if len(parts) == 0 {
-			continue
-		}
-		if parts[len(parts)-1] != key {
-			continue
-		}
-		groupPattern := parts[:len(parts)-1]
-		if len(groupPattern) != len(group) {
-			continue
-		}
-		matched := true
-		for idx := range groupPattern {
-			if groupPattern[idx] != "*" && groupPattern[idx] != group[idx] {
-				matched = false
-				break
-			}
-		}
-		if matched {
-			return true
-		}
-	}
-	return false
 }
 
 func plannedStatus(path string, data []byte) (string, error) {
@@ -240,7 +198,7 @@ func saveMetadata(ctx context.Context, opts SaveOptions, profileDir string, list
 		{path: filepath.Join(profileDir, "profile.toml"), data: []byte(profileContent)},
 		{path: filepath.Join(profileDir, "README.md"), data: []byte(readmeContent)},
 		{path: filepath.Join(profileDir, "manifests", "files.toml"), data: []byte(filesContent)},
-		{path: filepath.Join(profileDir, "manifests", "ignored.toml"), data: []byte("# Files or keys ignored during snapshot normalization.\n")},
+		{path: filepath.Join(profileDir, "manifests", "ignored.toml"), data: []byte("# Reserved for future ignored files or keys. Saved files are not stripped.\n")},
 		{path: filepath.Join(profileDir, "manifests", "environment.toml"), data: []byte(environmentContent)},
 		{path: filepath.Join(profileDir, "manifests", "privacy.md"), data: []byte(privacyReview())},
 	}
@@ -274,6 +232,9 @@ func profileMetadata(ctx context.Context, opts SaveOptions, list *allowlist.Allo
 	if version, err := plasma.DetectVersion(ctx); err == nil {
 		fmt.Fprintf(&b, "plasma_version = %q\n", version)
 	}
+	if distro, err := platform.DetectDistro(); err == nil {
+		fmt.Fprintf(&b, "distro = %q\n", distro)
+	}
 	return b.String()
 }
 
@@ -301,6 +262,9 @@ func environmentMetadata(ctx context.Context) string {
 	var b strings.Builder
 	if version, err := plasma.DetectVersion(ctx); err == nil {
 		fmt.Fprintf(&b, "plasma_version = %q\n", version)
+	}
+	if distro, err := platform.DetectDistro(); err == nil {
+		fmt.Fprintf(&b, "distro = %q\n", distro)
 	}
 	return b.String()
 }
