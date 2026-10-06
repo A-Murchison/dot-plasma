@@ -273,7 +273,4 @@ You can inspect, copy, back up, or commit this directory yourself.
 
 Issues, bug reports, real-world Plasma edge cases, and focused pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for development commands and project guidelines.
 
-
-#### Shout out
-
 Shout out to https://github.com/EliverLara/Nordic for the nordic theme in the gifs.
