@@ -4,7 +4,7 @@ Save, compare, and restore KDE Plasma desktop configuration as plain files.
 
 `dotplasma` is a small CLI for people who want their Plasma setup to be inspectable, backed up, and easy to move between machines. It snapshots an allowlisted set of KDE Plasma files from your home directory into regular folders that you can review, copy, or commit to Git yourself.
 
-<!-- TODO: Add screenshot or GIF: saving a profile and viewing the generated files -->
+![dotplasma CLI demo](assets/images/dotplasma1.GIF)
 
 ## Why use it?
 
@@ -26,6 +26,25 @@ KDE Plasma stores desktop state across several config files. That makes it hard 
 - **Git-friendly output** that you control; no automatic commits or remote sync.
 - **Conservative file scope** using an allowlist of known Plasma config files.
 - **No root and no network access** required.
+
+## Good fit
+
+`dotplasma` is most useful when you want to:
+
+- keep a known-good Plasma layout before experimenting with panels, widgets, shortcuts, or desktop settings;
+- review what changed in Plasma's config files before committing dotfiles;
+- back up and restore Plasma configuration on the same machine;
+- move a profile between similar Plasma installations while reviewing it before applying.
+
+## What gets captured?
+
+`dotplasma` tracks an allowlisted set of KDE Plasma configuration files, including files related to panels, widgets, desktop layout, shortcuts, Plasma Shell, KWin, and display/layout state where supported.
+
+Run this to see exactly which tracked files exist on your machine:
+
+```sh
+dotplasma inspect-live
+```
 
 > [!WARNING]
 > Treat saved profiles as private. Plasma config can include local paths, widget settings, wallpaper paths, monitor layout details, and other machine-specific data. Review files before sharing or publishing them.
