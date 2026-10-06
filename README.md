@@ -276,4 +276,5 @@ Issues, bug reports, real-world Plasma edge cases, and focused pull requests are
 ---
 
 Shout out to https://github.com/EliverLara/Nordic for the nordic theme in the gifs.
+
 Shout out to https://github.com/Prayag2/konsave for the inspiration
