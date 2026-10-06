@@ -9,9 +9,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"dot-plasma/internal/allowlist"
-	"dot-plasma/internal/paths"
-	"dot-plasma/internal/plasma"
+	"github.com/A-Murchison/dot-plasma/internal/allowlist"
+	"github.com/A-Murchison/dot-plasma/internal/paths"
+	"github.com/A-Murchison/dot-plasma/internal/plasma"
 )
 
 func runDoctor(ctx context.Context, stdout io.Writer, out string) error {
@@ -29,11 +29,11 @@ func runDoctor(ctx context.Context, stdout io.Writer, out string) error {
 	}
 
 	fmt.Fprintln(stdout, "dotplasma doctor")
-	fmt.Fprintf(stdout, "allowlist: ok (version %d, %d files)\n", list.Version, len(list.Files))
+	fmt.Fprintf(stdout, "Allowlist: OK (version %d, %d files)\n", list.Version, len(list.Files))
 	healthy := true
-	healthy = printPathCheck(stdout, "config root", roots.Config, false) && healthy
-	healthy = printPathCheck(stdout, "local-share root", roots.LocalShare, false) && healthy
-	healthy = printPathCheck(stdout, "output dir", out, true) && healthy
+	healthy = printPathCheck(stdout, "Config root", roots.Config, false) && healthy
+	healthy = printPathCheck(stdout, "Local data root", roots.LocalShare, false) && healthy
+	healthy = printPathCheck(stdout, "Output directory", out, true) && healthy
 	healthy = printAllowlistedFilesCheck(stdout, list, roots) && healthy
 	printPlasmaVersion(ctx, stdout)
 	if !healthy {
@@ -56,7 +56,8 @@ func runInspectLive(stdout io.Writer) error {
 	}
 
 	tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(tw, "ROOT\tPATH\tSTATUS\tREQUIRED\tPARSER")
+	fmt.Fprintln(stdout, "Tracked live Plasma files")
+	fmt.Fprintln(tw, "Root\tPath\tStatus\tRequired\tParser")
 	for _, file := range allowlist.SortedFiles(list.Files) {
 		livePath, err := roots.Join(file.Root, file.Path)
 		if err != nil {
@@ -82,19 +83,19 @@ type allowlistedFilesCheck struct {
 func printAllowlistedFilesCheck(stdout io.Writer, list *allowlist.Allowlist, roots paths.LiveRoots) bool {
 	check, err := checkAllowlistedFiles(list, roots)
 	if err != nil {
-		fmt.Fprintf(stdout, "allowlisted files: error (%s)\n", err.Error())
+		fmt.Fprintf(stdout, "Tracked live files: error (%s)\n", err.Error())
 		return false
 	}
 
-	status := "ok"
+	status := "OK"
 	healthy := true
 	if check.MissingRequired > 0 || check.Errors > 0 {
-		status = "problems"
+		status = "problems found"
 		healthy = false
 	}
 	fmt.Fprintf(
 		stdout,
-		"allowlisted files: %s (%d total, %d present, %d missing optional, %d missing required, %d errors)\n",
+		"Tracked live files: %s (%d total, %d present, %d optional missing, %d required missing, %d errors)\n",
 		status,
 		check.Total,
 		check.Present,
@@ -151,14 +152,14 @@ func printPlasmaVersion(ctx context.Context, stdout io.Writer) {
 
 	version, err := plasma.DetectVersion(versionCtx)
 	if err == nil {
-		fmt.Fprintf(stdout, "plasma version: %s\n", version)
+		fmt.Fprintf(stdout, "Plasma version: %s\n", version)
 		return
 	}
 	if errors.Is(err, plasma.ErrVersionUnavailable) {
-		fmt.Fprintln(stdout, "plasma version: unknown")
+		fmt.Fprintln(stdout, "Plasma version: unknown")
 		return
 	}
-	fmt.Fprintf(stdout, "plasma version: unknown (%s)\n", err.Error())
+	fmt.Fprintf(stdout, "Plasma version: unknown (%s)\n", err.Error())
 }
 
 func printPathCheck(stdout io.Writer, label, path string, requireWritable bool) bool {
@@ -191,7 +192,7 @@ func printPathCheck(stdout io.Writer, label, path string, requireWritable bool) 
 			return false
 		}
 	}
-	fmt.Fprintf(stdout, "%s: ok (%s)\n", label, path)
+	fmt.Fprintf(stdout, "%s: OK (%s)\n", label, path)
 	return true
 }
 

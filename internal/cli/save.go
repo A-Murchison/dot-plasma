@@ -5,26 +5,19 @@ import (
 	"fmt"
 	"io"
 
-	"dot-plasma/internal/profile"
+	"github.com/A-Murchison/dot-plasma/internal/profile"
 )
 
 func runSave(ctx context.Context, stdout io.Writer, opts profile.SaveOptions) error {
-	fmt.Fprintln(stdout, "privacy: saved Plasma configuration may contain personal or machine-specific data; review before committing publicly")
+	fmt.Fprintln(stdout, "Privacy: saved profiles may contain personal or machine-specific data; review before sharing or committing.")
 	result, err := profile.Save(ctx, opts)
 	if err != nil {
 		return err
 	}
 	if opts.DryRun {
-		fmt.Fprintln(stdout, "dry run: no files written")
+		fmt.Fprintln(stdout, "Dry run: no files written.")
 	}
-	fmt.Fprintf(stdout, "profile: %s\n", opts.Profile)
-	fmt.Fprintf(stdout, "profile dir: %s\n", result.ProfileDir)
-	for _, action := range result.Actions {
-		if action.Source == "" {
-			fmt.Fprintf(stdout, "%s %s\n", action.Status, action.Target)
-			continue
-		}
-		fmt.Fprintf(stdout, "%s %s -> %s\n", action.Status, action.Source, action.Target)
-	}
-	return nil
+	fmt.Fprintf(stdout, "Profile: %s\n", opts.Profile)
+	fmt.Fprintf(stdout, "Profile directory: %s\n", result.ProfileDir)
+	return writeActionTable(stdout, "Changes", "Live file", "Saved file", result.Actions)
 }

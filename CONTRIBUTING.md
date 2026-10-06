@@ -22,9 +22,6 @@ If your environment has the optional tools installed:
 make check
 ```
 
-## Dependency policy
-
-Ask before adding third-party dependencies. The CLI may use Cobra later, but the initial skeleton intentionally uses the standard library so the project can start without dependency churn.
 
 ## Code style
 

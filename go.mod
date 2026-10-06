@@ -1,4 +1,4 @@
-module dot-plasma
+module github.com/A-Murchison/dot-plasma
 
 go 1.26.8
 

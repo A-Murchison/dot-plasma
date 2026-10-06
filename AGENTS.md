@@ -50,3 +50,4 @@ make the suite faster.
 - Ensure `CONTRIBUTING.md` is up-to-date.
 - Keep `README.md` up-to-date for end users: lead with what the tool lets them do, keep it informative and concise, avoid hype/cringe, and include only content that helps someone decide whether and how to use the tool.
 - Use conventional commits for commit messages.
+- GitHub Actions workflows for this repository should pin every third-party action to a full commit SHA instead of a mutable tag. For example, use `actions/checkout@<40-character-sha>` instead of `actions/checkout@v4`, and update the SHA only after reviewing the upstream release.

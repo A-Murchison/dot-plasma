@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"dot-plasma/internal/paths"
+	"github.com/A-Murchison/dot-plasma/internal/paths"
 )
 
 func TestSaveCreatesProfileFiles(t *testing.T) {
@@ -20,12 +20,15 @@ func TestSaveCreatesProfileFiles(t *testing.T) {
 	writeFile(t, filepath.Join(configRoot, "kdeglobals"), "[General]\nColorScheme=BreezeDark\n")
 	writeFile(t, filepath.Join(configRoot, "kwinrc"), "[Windows]\nPlacement=Smart\n")
 	writeFile(t, filepath.Join(configRoot, "plasmarc"), "[Theme]\nname=breeze\n")
-	writeFile(t, filepath.Join(configRoot, "plasma-org.kde.plasma.desktop-appletsrc"), strings.Join([]string{
+	writeFile(t, filepath.Join(configRoot, "plasmashellrc"), "[PlasmaViews][Panel 1]\nfloating=1\npanelLengthMode=0\n")
+	plasmaInput := strings.Join([]string{
+		"# preserve comments and exact bytes",
 		"[Containments][1]",
 		"lastScreen=0",
 		"plugin=org.kde.plasma.folder",
 		"",
-	}, "\n"))
+	}, "\n")
+	writeFile(t, filepath.Join(configRoot, "plasma-org.kde.plasma.desktop-appletsrc"), plasmaInput)
 	writeFile(t, filepath.Join(configRoot, "kscreenlockerrc"), "[Daemon]\nAutolock=false\n")
 
 	result, err := Save(context.Background(), SaveOptions{
@@ -51,6 +54,7 @@ func TestSaveCreatesProfileFiles(t *testing.T) {
 		filepath.Join("files", "config", "kdeglobals"),
 		filepath.Join("files", "config", "kwinrc"),
 		filepath.Join("files", "config", "plasmarc"),
+		filepath.Join("files", "config", "plasmashellrc"),
 		filepath.Join("files", "config", "plasma-org.kde.plasma.desktop-appletsrc"),
 		filepath.Join("files", "config", "kscreenlockerrc"),
 	}
@@ -61,9 +65,17 @@ func TestSaveCreatesProfileFiles(t *testing.T) {
 		}
 	}
 
+	plasmaShellConfig := readFile(t, filepath.Join(result.ProfileDir, "files", "config", "plasmashellrc"))
+	if !strings.Contains(plasmaShellConfig, "floating=1") || !strings.Contains(plasmaShellConfig, "panelLengthMode=0") {
+		t.Fatalf("saved Plasma Shell view state missing panel settings: %q", plasmaShellConfig)
+	}
+
 	plasmaConfig := readFile(t, filepath.Join(result.ProfileDir, "files", "config", "plasma-org.kde.plasma.desktop-appletsrc"))
-	if strings.Contains(plasmaConfig, "lastScreen=0") {
-		t.Fatalf("volatile key was not stripped: %q", plasmaConfig)
+	if plasmaConfig != plasmaInput {
+		t.Fatalf("saved Plasma Shell layout was not exact: got %q want %q", plasmaConfig, plasmaInput)
+	}
+	if !strings.Contains(plasmaConfig, "lastScreen=0") {
+		t.Fatalf("screen binding key missing from saved profile: %q", plasmaConfig)
 	}
 	if !strings.Contains(plasmaConfig, "plugin=org.kde.plasma.folder") {
 		t.Fatalf("non-volatile key missing: %q", plasmaConfig)

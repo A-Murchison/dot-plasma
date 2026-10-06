@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"dot-plasma/internal/allowlist"
+	"github.com/A-Murchison/dot-plasma/internal/allowlist"
 )
 
 type ImportOptions struct {

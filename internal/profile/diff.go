@@ -10,9 +10,9 @@ import (
 	"sort"
 	"strings"
 
-	"dot-plasma/internal/allowlist"
-	"dot-plasma/internal/kconfig"
-	"dot-plasma/internal/paths"
+	"github.com/A-Murchison/dot-plasma/internal/allowlist"
+	"github.com/A-Murchison/dot-plasma/internal/kconfig"
+	"github.com/A-Murchison/dot-plasma/internal/paths"
 )
 
 var ErrDifferencesFound = errors.New("differences found")

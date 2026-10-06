@@ -6,7 +6,7 @@
 # - path: relative path under the root
 # - required: missing optional files do not fail save/diff
 # - parser: "kconfig" for KDE config syntax, "raw-copy" for uninterpreted files
-# - volatile: group/key patterns to strip or ignore during normalized snapshots
+# - volatile: group/key patterns known to be noisy; currently informational only
 
 version = 1
 
@@ -43,6 +43,16 @@ notes = "Panel, widget, containment, and desktop layout configuration. High valu
 volatile = [
   "Containments/*/lastScreen",
   "Containments/*/Applets/*/Configuration/PreloadWeight",
+]
+
+[[files]]
+root = "config"
+path = "plasmashellrc"
+required = false
+parser = "kconfig"
+notes = "Plasma Shell view state, including Plasma 6 panel floating, length, visibility, and thickness settings. Complements plasma-org.kde.plasma.desktop-appletsrc."
+volatile = [
+  "Updates/performed",
 ]
 
 [[files]]
