@@ -55,56 +55,6 @@ Useful notes:
 - `diff --color auto` colorizes statuses only when writing to a terminal. Use `always` or `never` to override it.
 
 
-## Install
-
-### Go install
-
-If you have Go installed, this is the simplest option:
-
-```sh
-go install github.com/A-Murchison/dot-plasma/cmd/dotplasma@latest
-dotplasma --help
-```
-
-### Manual install
-
-From a local checkout:
-
-```sh
-go build -o ~/.local/bin/dotplasma ./cmd/dotplasma
-# or run without installing
-go run ./cmd/dotplasma --help
-```
-
-
-### Fedora, RHEL, CentOS, and other RPM-based systems
-
-For releases that include RPM packages, download the RPM for your architecture from the [GitHub Releases](https://github.com/A-Murchison/dot-plasma/releases) page, then install it with `dnf`:
-
-```sh
-sudo dnf install ./dotplasma-0.1.0-1.x86_64.rpm
-dotplasma --help
-```
-
-You can also install an RPM directly from a release URL:
-
-```sh
-sudo dnf install \
-  https://github.com/A-Murchison/dot-plasma/releases/download/v0.1.0/dotplasma-0.1.0-1.x86_64.rpm
-```
-
-Replace `v0.1.0` and the package filename with the release and architecture you want.
-
-### Debian and Ubuntu
-
-For releases that include Debian packages, download the `.deb` package for your architecture from the [GitHub Releases](https://github.com/A-Murchison/dot-plasma/releases) page, then install it with `apt`:
-
-```sh
-sudo apt install ./dotplasma_0.1.0_amd64.deb
-dotplasma --help
-```
-
-
 ## Quick start
 
 By default, `dotplasma` stores profiles and restore backups under:
@@ -141,6 +91,24 @@ Run this to see exactly which tracked files exist on your machine:
 ```sh
 dotplasma inspect-live
 ```
+
+## Configuration
+
+`dotplasma` reads this config file by default:
+
+```text
+${XDG_CONFIG_HOME:-~/.config}/dotplasma/config.toml
+```
+
+Supported setting:
+
+```toml
+# Root directory containing profiles/ and backups/.
+output_dir = "/home/adam/dotplasma-backups"
+```
+
+`--out DIR` overrides the config file for a single command. `--config PATH` reads a different config file.
+
 
 ## Common workflows
 
@@ -213,22 +181,56 @@ During this reload, panels, desktop widgets, wallpaper, and command bars can bri
 dotplasma apply main --out ~/dotplasma-backups --reload plasmashell --dry-run
 ```
 
-## Configuration
+## Install
 
-`dotplasma` reads this config file by default:
+### Go install
 
-```text
-${XDG_CONFIG_HOME:-~/.config}/dotplasma/config.toml
+If you have Go installed, this is the simplest option:
+
+```sh
+go install github.com/A-Murchison/dot-plasma/cmd/dotplasma@latest
+dotplasma --help
 ```
 
-Supported setting:
+### Manual install
 
-```toml
-# Root directory containing profiles/ and backups/.
-output_dir = "/home/adam/dotplasma-backups"
+From a local checkout:
+
+```sh
+go build -o ~/.local/bin/dotplasma ./cmd/dotplasma
+# or run without installing
+go run ./cmd/dotplasma --help
 ```
 
-`--out DIR` overrides the config file for a single command. `--config PATH` reads a different config file.
+
+### Fedora, RHEL, CentOS, and other RPM-based systems
+
+For releases that include RPM packages, download the RPM for your architecture from the [GitHub Releases](https://github.com/A-Murchison/dot-plasma/releases) page, then install it with `dnf`:
+
+```sh
+sudo dnf install ./dotplasma-0.1.0-1.x86_64.rpm
+dotplasma --help
+```
+
+You can also install an RPM directly from a release URL:
+
+```sh
+sudo dnf install \
+  https://github.com/A-Murchison/dot-plasma/releases/download/v0.1.0/dotplasma-0.1.0-1.x86_64.rpm
+```
+
+Replace `v0.1.0` and the package filename with the release and architecture you want.
+
+### Debian and Ubuntu
+
+For releases that include Debian packages, download the `.deb` package for your architecture from the [GitHub Releases](https://github.com/A-Murchison/dot-plasma/releases) page, then install it with `apt`:
+
+```sh
+sudo apt install ./dotplasma_0.1.0_amd64.deb
+dotplasma --help
+```
+
+
 
 ## Output layout
 
