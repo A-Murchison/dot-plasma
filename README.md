@@ -17,7 +17,8 @@ Save, compare, and restore KDE Plasma desktop configuration as plain files.
 - review what changed in Plasma's config files before committing dotfiles;
 - back up and restore Plasma configuration on the same machine;
 - move a profile between similar Plasma installations while reviewing it before applying.
-
+- backup to git
+- 
 `dotplasma` focuses on that workflow: snapshot, diff, review, and only then restore if you choose to.
 
 ## Features
